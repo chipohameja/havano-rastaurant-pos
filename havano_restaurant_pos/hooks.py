@@ -7,6 +7,11 @@ app_license = "mit"
 
 # Apps
 # ------------------
+website_route_rules = [
+    {"from_route": "/menu", "to_route": "/dashboard"},
+    {"from_route": "/tables", "to_route": "/dashboard"},
+    {"from_route": "/orders", "to_route": "/dashboard"},
+]
 
 # required_apps = []
 
@@ -241,4 +246,3 @@ app_license = "mit"
 # default_log_clearing_doctypes = {
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
-
