@@ -1,0 +1,51 @@
+{
+  "actions": [],
+  "allow_rename": 1,
+  "creation": "2025-10-14 09:44:14.866593",
+  "doctype": "DocType",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": ["order", "status", "value"],
+  "fields": [
+    {
+      "fieldname": "order",
+      "fieldtype": "Link",
+      "in_list_view": 1,
+      "label": "Order",
+      "options": "HA Order",
+      "read_only": 1,
+      "reqd": 1
+    },
+    {
+      "fetch_from": "order.total_price",
+      "fieldname": "value",
+      "fieldtype": "Currency",
+      "in_list_view": 1,
+      "label": "Value",
+      "read_only": 1
+    },
+    {
+      "fetch_from": "order.order_status",
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "in_list_view": 1,
+      "label": "Status",
+      "options": "Open\nClosed\nVoided",
+      "read_only": 1
+    }
+  ],
+  "grid_page_length": 50,
+  "index_web_pages_for_search": 1,
+  "istable": 1,
+  "links": [],
+  "modified": "2025-10-14 13:05:40.606617",
+  "modified_by": "Administrator",
+  "module": "Havano Restaurant Pos",
+  "name": "HA Table Order",
+  "owner": "Administrator",
+  "permissions": [],
+  "row_format": "Dynamic",
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": []
+}
