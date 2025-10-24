@@ -8,6 +8,7 @@ app_license = "mit"
 # Apps
 # ------------------
 website_route_rules = [
+    {"from_route": "/dashboard/<path:subpath>", "to_route": "/dashboard"},
     {"from_route": "/menu", "to_route": "/dashboard"},
     {"from_route": "/tables", "to_route": "/dashboard"},
     {"from_route": "/orders", "to_route": "/dashboard"},

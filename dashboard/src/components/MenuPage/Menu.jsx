@@ -10,6 +10,7 @@ import NumPad from "./UpdateCartDialog";
 const Menu = () => {
   const { menuItems, fetchMenuItems } = useMenuStore();
   const selectedCategory = useCartStore((state) => state.selectedCategory);
+  const selectedCategoryId = selectedCategory?.id;
   const [searchTerm, setSearchTerm] = useState("");
   console.log(menuItems);
 
@@ -22,16 +23,16 @@ const Menu = () => {
 
     return menuItems.filter((item) => {
       const matchesCategory =
-        !selectedCategory?.id ||
-        selectedCategory.id === "all" ||
-        item.custom_menu_category === selectedCategory.id;
+        !selectedCategoryId ||
+        selectedCategoryId === "all" ||
+        item.custom_menu_category === selectedCategoryId;
 
       const label = (item.item_name || item.name || "").toLowerCase();
       const matchesSearch = !term || label.includes(term);
 
       return matchesCategory && matchesSearch;
     });
-  }, [menuItems, searchTerm, selectedCategory]);
+  }, [menuItems, searchTerm, selectedCategoryId]);
 
   return (
     <>

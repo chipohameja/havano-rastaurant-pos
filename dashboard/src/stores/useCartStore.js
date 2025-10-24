@@ -9,7 +9,7 @@ export const useCartStore = create((set) => ({
   activeWaiterId: null,
   activeOrderId: null,
   customerName: "",
-  selectedCategory: { id: "all", name: "All" },
+  selectedCategory: null,
   selectedCartItem: null,
   isUpdateDialogOpen: false,
 
