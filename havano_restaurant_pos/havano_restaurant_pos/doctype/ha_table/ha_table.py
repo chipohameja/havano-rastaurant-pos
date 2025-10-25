@@ -56,7 +56,7 @@ class HATable(Document):
             sales_invoice.append(
                 "items",
                 {
-                    "item_code": item["menu_item"][:140],
+                    "item_code": item["menu_item"],
                     "qty": item["qty"],
                     "rate": item["rate"],
                     "amount": item["amount"],
