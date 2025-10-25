@@ -3,7 +3,6 @@
 
 import frappe
 from frappe.model.document import Document
-from collections import defaultdict
 
 class HATable(Document):
 
@@ -16,9 +15,6 @@ class HATable(Document):
         default_dine_in_customer = frappe.db.get_single_value(
             "Sample Pos Settings", "default_dine_in_customer"
         )
-
-        if not default_dine_in_customer:
-            default_dine_in_customer = "Tinashe"
 
         order_items = []
         for order in self.table_order:
@@ -60,7 +56,7 @@ class HATable(Document):
             sales_invoice.append(
                 "items",
                 {
-                    "item_code": item["menu_item"][:140],
+                    "item_code": item["menu_item"],
                     "qty": item["qty"],
                     "rate": item["rate"],
                     "amount": item["amount"],
