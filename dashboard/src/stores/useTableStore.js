@@ -44,7 +44,7 @@ export const useTableStore = create((set) => ({
     set({ loadingTableDetails: true, errorTableDetails: null });
     try {
       const data = await db.getDoc("HA Table", tableName, {
-        fields: ["name", "table_number", "capacity", "status", "floor", "assigned_waiter"],
+        fields: ["name", "table_number", "capacity", "status", "floor", "assigned_waiter", "customer_name"],
       });
       set({ tableDetails: data, loadingTableDetails: false });
     } catch (err) {
