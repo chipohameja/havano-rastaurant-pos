@@ -8,51 +8,66 @@ from collections import defaultdict
 class HATable(Document):
 
     def create_sales_invoice(self):
+        """Create a Sales Invoice for this HA Table"""
+
         if not self.table_order:
-            return
+            frappe.throw(f"No active orders found for table: {self.name}")
+
         default_dine_in_customer = frappe.db.get_single_value(
-			"Sample Pos Settings", "default_dine_in_customer"
-		)
+            "Sample Pos Settings", "default_dine_in_customer"
+        )
+
+        if not default_dine_in_customer:
+            default_dine_in_customer = "Tinashe"
+
         order_items = []
         for order in self.table_order:
             order_doc = frappe.get_doc("HA Order", order.order)
             for order_item in order_doc.order_items:
-                order_items.append({
-					"menu_item": order_item.menu_item,
-					"qty": order_item.qty,
-					"rate": order_item.rate,
-					"amount": order_item.amount
-				})
-            order_doc.db_set("order_status", "Closed", update_modified=True)
+                order_items.append(
+                    {
+                        "menu_item": order_item.menu_item,
+                        "qty": order_item.qty,
+                        "rate": order_item.rate,
+                        "amount": order_item.amount,
+                    }
+                )
 
-        merged = defaultdict(
-            lambda: {"qty": 0, "rate": 0, "amount": 0, "menu_item": ""}
-        )
+            order_doc.order_status = "Closed"
+            order_doc.save(ignore_permissions=True)
+            frappe.db.commit()
 
-        for i in order_items:
-            key = (i["menu_item"], i["rate"])
-            merged[key]["menu_item"] = i["menu_item"]
-            merged[key]["rate"] = i["rate"]
-            merged[key]["qty"] += i["qty"]
-            merged[key]["amount"] = merged[key]["qty"] * i["rate"]
-
-        order_items = list(merged.values())
+        merged_items = []
+        for item in order_items:
+            found = False
+            for merged in merged_items:
+                if (
+                    merged["menu_item"] == item["menu_item"]
+                    and merged["rate"] == item["rate"]
+                ):
+                    merged["qty"] = merged["qty"] + item["qty"]
+                    merged["amount"] = merged["qty"] * merged["rate"]
+                    found = True
+                    break
+            if not found:
+                merged_items.append(item)
 
         sales_invoice = frappe.new_doc("Sales Invoice")
         sales_invoice.customer = default_dine_in_customer
         sales_invoice.due_date = frappe.utils.nowdate()
 
-        for item in order_items:
-            sales_invoice.append("items", {
-                "item_code": item["menu_item"][:140],
-                "qty": item["qty"],
-                "rate": item["rate"],
-                "amount": item["amount"]
-            })
+        for item in merged_items:
+            sales_invoice.append(
+                "items",
+                {
+                    "item_code": item["menu_item"][:140],
+                    "qty": item["qty"],
+                    "rate": item["rate"],
+                    "amount": item["amount"],
+                },
+            )
 
-        if not sales_invoice.due_date:
-            sales_invoice.due_date = frappe.utils.nowdate()
-        sales_invoice.insert()
+        sales_invoice.insert(ignore_permissions=True)
         sales_invoice.submit()
         frappe.db.commit()
 
