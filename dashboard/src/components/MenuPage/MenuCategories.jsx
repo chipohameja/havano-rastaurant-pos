@@ -21,12 +21,23 @@ const MenuCategories = () => {
   const selectedCategory = useCartStore((state) => state.selectedCategory);
   const setSelectedCategory = useCartStore((state) => state.setSelectedCategory);
 
-  const categories = useMemo(
-    () => [
-      { name: "all", category_name: "All" },
-      ...menuCategories,
-    ],
-    [menuCategories]
+  const categories = useMemo(() => {
+    if (!menuCategories) {
+      return [];
+    }
+    return [...menuCategories].sort((a, b) => {
+      const labelA = a.category_name || a.name || "";
+      const labelB = b.category_name || b.name || "";
+      return labelA.localeCompare(labelB, undefined, { sensitivity: "base" });
+    });
+  }, [menuCategories]);
+  const visibleCategories = useMemo(
+    () =>
+      categories.filter((category) => {
+        const count = categoryCounts[category.name];
+        return count === undefined || count > 0;
+      }),
+    [categories, categoryCounts]
   );
 
   useEffect(() => {
@@ -35,19 +46,9 @@ const MenuCategories = () => {
 
   useEffect(() => {
     if (!categories.length) {
+      setSelectedCategory(null);
       return;
     }
-
-    setSelectedCategory((prevSelected) => {
-      if (prevSelected && prevSelected.id) {
-        return prevSelected;
-      }
-      const firstCategory = categories[0];
-      return {
-        id: firstCategory.name,
-        name: firstCategory.category_name,
-      };
-    });
 
     setCategoryColors((prevColors) => {
       const nextColors = { ...prevColors };
@@ -58,7 +59,26 @@ const MenuCategories = () => {
       });
       return nextColors;
     });
-  }, [categories, setSelectedCategory]);
+    if (!visibleCategories.length) {
+      setSelectedCategory(null);
+      return;
+    }
+
+    setSelectedCategory((prevSelected) => {
+      if (
+        prevSelected &&
+        prevSelected.id &&
+        visibleCategories.some((category) => category.name === prevSelected.id)
+      ) {
+        return prevSelected;
+      }
+      const firstCategory = visibleCategories[0];
+      return {
+        id: firstCategory.name,
+        name: firstCategory.category_name,
+      };
+    });
+  }, [categories, visibleCategories, setSelectedCategory]);
 
   useEffect(() => {
     if (!categories.length) {
@@ -70,10 +90,7 @@ const MenuCategories = () => {
     const loadCounts = async () => {
       const entries = await Promise.all(
         categories.map(async (category) => {
-          const count =
-            category.name === "all"
-              ? await getNumberOfItems()
-              : await getNumberOfItems(category.name);
+          const count = await getNumberOfItems(category.name);
           return [category.name, count];
         })
       );
@@ -107,12 +124,12 @@ const MenuCategories = () => {
           </DrawerHeader>
           <div className="p-4 mt-2 overflow-y-auto scrollbar-hide">
             <div className="grid grid-cols-1 gap-4">
-              {categories.map((category) => (
+              {visibleCategories.map((category) => (
                 <div
                   key={category.name}
                   style={{ backgroundColor: categoryColors[category.name] }}
                   className={`flex flex-col p-4 rounded-lg h-[100px] cursor-pointer ${
-                    selectedCategory.id === category.name
+                    selectedCategory?.id === category.name
                       ? "ring-2 ring-white"
                       : ""
                   }`}
@@ -127,7 +144,7 @@ const MenuCategories = () => {
                     <h1 className="text-2xl text-white font-bold">
                       {category.category_name}
                     </h1>
-                    {selectedCategory.id === category.name && (
+                    {selectedCategory?.id === category.name && (
                       <div className="border-2 border-white p-1 rounded-full">
                         <div className="w-3 h-3 bg-white rounded-full"></div>
                       </div>

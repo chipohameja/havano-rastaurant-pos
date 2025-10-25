@@ -96,6 +96,7 @@ def create_order_from_cart(payload):
         if table and payload.get("order_type") == "Dine In":
             table = frappe.get_doc("HA Table", table)
             table.assigned_waiter = payload.get("waiter")
+            table.customer_name = payload.get("customer_name")
             table.append(
                 "table_order",
                 {

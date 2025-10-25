@@ -41,6 +41,7 @@ import { useCartStore } from "@/stores/useCartStore";
 import { useOrderStore } from "@/stores/useOrderStore";
 import { useTableStore } from "@/stores/useTableStore";
 import { useWaiterStore } from "@/stores/useWaiterStore";
+import { ta } from "zod/v4/locales";
 
 const TableDetails = () => {
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
@@ -91,6 +92,11 @@ const TableDetails = () => {
       setValue("waiter", tableDetails.assigned_waiter);
     } else {
       setValue("waiter", "");
+    }
+    if (tableDetails?.customer_name) {
+      setValue("customerName", tableDetails.customer_name);
+    } else {
+      setValue("customerName", "");
     }
   }, [tableOrders, setValue]);
 
