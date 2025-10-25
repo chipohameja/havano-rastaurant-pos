@@ -40,14 +40,18 @@ class HATable(Document):
 
         sales_invoice = frappe.new_doc("Sales Invoice")
         sales_invoice.customer = default_dine_in_customer
+        sales_invoice.due_date = frappe.utils.nowdate()
+
         for item in order_items:
             sales_invoice.append("items", {
-				"item_code": item["menu_item"][:140],
-				"qty": item["qty"],
-				"rate": item["rate"],
-				"amount": item["amount"]
-			})
-        sales_invoice.due_date = frappe.utils.nowdate()
+                "item_code": item["menu_item"][:140],
+                "qty": item["qty"],
+                "rate": item["rate"],
+                "amount": item["amount"]
+            })
+
+        if not sales_invoice.due_date:
+            sales_invoice.due_date = frappe.utils.nowdate()
         sales_invoice.insert()
         sales_invoice.submit()
         frappe.db.commit()
