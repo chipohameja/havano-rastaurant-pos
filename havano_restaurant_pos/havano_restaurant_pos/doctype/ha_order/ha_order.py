@@ -7,97 +7,97 @@ from frappe.model.document import Document
 
 class HAOrder(Document):
 
-    def before_save(self):
-        self.calculate_total_amount()
+	def before_save(self):
+		self.calculate_total_amount()
 
-    def on_cancel(self):
-        if self.sales_invoice:
-            frappe.delete_doc("Sales Invoice", self.sales_invoice)
+	def on_cancel(self):
+		if self.sales_invoice:
+			frappe.delete_doc("Sales Invoice", self.sales_invoice)
 
-    def on_trash(self):
-        self.delete_linked_child_rows()
+	def on_trash(self):
+		self.delete_linked_child_rows()
 
-    def on_update(self):
-        self.update_linked_table_orders()
+	def on_update(self):
+		self.update_linked_table_orders()
 
-    def update_linked_table_orders(self):
-        linked_rows = frappe.get_all(
+	def update_linked_table_orders(self):
+		linked_rows = frappe.get_all(
 			"HA Table Order",
 			filters={"order": self.name},
 			fields=["name", "parent"]
 		)
 
-        for row in linked_rows:
-            try:
-                parent_doc = frappe.get_doc("HA Table", row.parent)
+		for row in linked_rows:
+			try:
+				parent_doc = frappe.get_doc("HA Table", row.parent)
 
-                # Find and update the correct child row
-                for child in parent_doc.table_order:
-                    if child.order == row.name:
-                        child.value = self.total_price
-                        child.status = self.order_status
+				# Find and update the correct child row
+				for child in parent_doc.table_order:
+					if child.order == row.name:
+						child.value = self.total_price
+						child.status = self.order_status
 
-                parent_doc.save(ignore_permissions=True)
+				parent_doc.save(ignore_permissions=True)
 
-            except Exception as e:
-                frappe.log_error(frappe.get_traceback(), f"Error updating linked table for {self.name}")
+			except Exception as e:
+				frappe.log_error(frappe.get_traceback(), f"Error updating linked table for {self.name}")
 
-        frappe.db.commit()
+		frappe.db.commit()
 
-        frappe.logger().info(f"✅ Synced HA Table Order rows for {self.name}")
+		frappe.logger().info(f"✅ Synced HA Table Order rows for {self.name}")
 
-    def delete_linked_child_rows(self):
-        linked_rows = frappe.get_all(
+	def delete_linked_child_rows(self):
+		linked_rows = frappe.get_all(
 			"HA Table Order",
 			filters={"order": self.name},
 			fields=["name", "parent"]
 		)
 
-        for row in linked_rows:
-            parent_doc = frappe.get_doc("HA Table", row.parent)
+		for row in linked_rows:
+			parent_doc = frappe.get_doc("HA Table", row.parent)
 
-            parent_doc.set(
+			parent_doc.set(
 				"table_order",
 				[d for d in parent_doc.table_order if d.name != row.name]
 			)
 
-            parent_doc.save(ignore_permissions=True)
+			parent_doc.save(ignore_permissions=True)
 
-        frappe.db.commit()
+		frappe.db.commit()
 
-        frappe.logger().info(f"✅ Cleaned up {len(linked_rows)} linked child rows for Order {self.name}")
+		frappe.logger().info(f"✅ Cleaned up {len(linked_rows)} linked child rows for Order {self.name}")
 
-    def calculate_total_amount(self):
-        total_amount = 0
-        for item in self.order_items:
-            total_amount += item.amount
-        self.total_price = total_amount
+	def calculate_total_amount(self):
+		total_amount = 0
+		for item in self.order_items:
+			total_amount += item.amount
+		self.total_price = total_amount
 
-    def create_invoice_from_order(self):
-        doc = frappe.new_doc("Sales Invoice")
-        default_take_away_customer = frappe.db.get_single_value(
-            "Sample Pos Settings", "default_take_away_customer"
-        )
+	def create_invoice_from_order(self):
+		doc = frappe.new_doc("Sales Invoice")
+		default_take_away_customer = frappe.db.get_single_value(
+			"Sample Pos Settings", "default_take_away_customer"
+		)
 
-        doc.customer = default_take_away_customer
+		doc.customer = default_take_away_customer
 
-        for item in self.order_items:
-            doc.append(
-                "items",
-                {
-                    "item_code": item.menu_item,
-                    "qty": item.qty,
-                    "rate": item.rate,
-                    "amount": item.amount,
-                },
-            )
+		for item in self.order_items:
+			doc.append(
+				"items",
+				{
+					"item_code": item.menu_item,
+					"qty": item.qty,
+					"rate": item.rate,
+					"amount": item.amount,
+				},
+			)
+		doc.due_date = frappe.utils.nowdate()
+		doc.insert()
+		doc.submit()
+		self.order_status = "Closed"
+		self.save(ignore_permissions=True)
 
-        doc.insert()
-        doc.submit()
-        self.order_status = "Closed"
-        self.save(ignore_permissions=True)
-
-        frappe.db.commit()
+		frappe.db.commit()
 
 
 @frappe.whitelist()

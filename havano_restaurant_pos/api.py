@@ -68,42 +68,53 @@ def get_number_of_items(category=None):
 def create_order_from_cart(payload):
     """Create an order from the cart"""
     try:
+        # Handle both dict and JSON string payloads
+        if isinstance(payload, str):
+            import json
+
+            payload = frappe.parse_json(payload)
+
+        # Helper to safely truncate overlong values
+        def safe(value):
+            if not value:
+                return ""
+            return str(value)[:140]  # truncate for Data fields
+
         order = frappe.new_doc("HA Order")
-        order.order_type = payload.get("order_type")
-        order.customer_name = payload.get("customer_name")
-        order.table = payload.get("table", "")
-        order.waiter = payload.get("waiter", "")
+        order.order_type = safe(payload.get("order_type"))
+        order.customer_name = safe(payload.get("customer_name"))
+        order.table = safe(payload.get("table"))
+        order.waiter = safe(payload.get("waiter"))
         order.payment_status = "Unpaid"
 
+        # Add items
         for item in payload.get("order_items", []):
             order.append(
                 "order_items",
                 {
-                    "menu_item": item.get("name"),
+                    "menu_item": safe(item.get("name")),
                     "qty": item.get("quantity"),
                     "rate": item.get("price"),
-                    "amount": item.get("price") * item.get("quantity"),
-                    "preparation_remark": item.get("remark"),
+                    "amount": (item.get("price") or 0) * (item.get("quantity") or 0),
+                    "preparation_remark": safe(item.get("remark")),
                 },
             )
 
-        order.save()
-        if payload.get("order_type") == "Take Away":
-            order.create_invoice_from_order()
+        order.save(ignore_permissions=True)
+
+        if order.order_type == "Take Away":
+            invoice = order.create_invoice_from_order()
+
         frappe.db.commit()
 
-        table = payload.get("table")
-        if table and payload.get("order_type") == "Dine In":
-            table = frappe.get_doc("HA Table", table)
-            table.assigned_waiter = payload.get("waiter")
-            table.customer_name = payload.get("customer_name")
-            table.append(
-                "table_order",
-                {
-                    "order": order.name,
-                },
-            )
-            table.save()
+        # If dine-in, link order to table
+        table_name = payload.get("table")
+        if table_name and order.order_type == "Dine In":
+            table = frappe.get_doc("HA Table", table_name)
+            table.assigned_waiter = safe(payload.get("waiter"))
+            table.customer_name = safe(payload.get("customer_name"))
+            table.append("table_order", {"order": order.name})
+            table.save(ignore_permissions=True)
             frappe.db.commit()
 
         return {
