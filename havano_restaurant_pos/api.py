@@ -68,17 +68,15 @@ def get_number_of_items(category=None):
 def create_order_from_cart(payload):
     """Create an order from the cart"""
     try:
-        # Handle both dict and JSON string payloads
         if isinstance(payload, str):
             import json
 
             payload = frappe.parse_json(payload)
 
-        # Helper to safely truncate overlong values
         def safe(value):
             if not value:
                 return ""
-            return str(value)[:140]  # truncate for Data fields
+            return str(value)[:140]
 
         order = frappe.new_doc("HA Order")
         order.order_type = safe(payload.get("order_type"))
