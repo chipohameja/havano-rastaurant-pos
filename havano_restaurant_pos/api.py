@@ -191,16 +191,29 @@ def get_number_of_orders(menu_item):
 def mark_table_as_paid(table):
     try:
         table_doc = frappe.get_doc("HA Table", table)
+
         sales_invoice = table_doc.create_sales_invoice()
-        table_doc.table_order = []
-        table_doc.save()
+
+        try:
+            table_doc.table_order = []
+            table_doc.save()
+        except frappe.TimestampMismatchError:
+            frappe.db.rollback()
+            table_doc = frappe.get_doc("HA Table", table)
+            table_doc.table_order = []
+            table_doc.save()
+
         return {
             "success": True,
             "message": "Sales Invoice created successfully",
             "sales_invoice": sales_invoice.name,
         }
+
     except Exception as e:
-        frappe.log_error(f"Error creating sales invoice: {frappe.get_traceback()}")
+        # Avoid overly long titles in Error Log
+        title = f"Error creating sales invoice for {table}: {str(e)[:100]}"
+        frappe.log_error(message=frappe.get_traceback(), title=title)
+
         return {
             "success": False,
             "message": "Failed to create sales invoice",
