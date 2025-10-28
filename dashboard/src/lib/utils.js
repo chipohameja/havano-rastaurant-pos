@@ -8,6 +8,23 @@ export function cn(...inputs) {
 }
 
 let defaultCurrency = "USD";
+const MAX_ORDER_RETRY_ATTEMPTS = 3;
+
+async function attemptWithRetries(action, description, attempts = MAX_ORDER_RETRY_ATTEMPTS) {
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return await action();
+    } catch (err) {
+      lastError = err;
+      console.error(`${description} failed (attempt ${attempt}/${attempts}):`, err);
+      if (attempt === attempts) {
+        break;
+      }
+    }
+  }
+  throw lastError;
+}
 
 async function initDefaultCurrency() {
   try {
@@ -184,28 +201,28 @@ export async function callPut(endpoint, data = {}) {
 }
 
 export async function handleCreateOrder(payload) {
-  try {
-    const { message } = await call.post(
-      "havano_restaurant_pos.api.create_order_from_cart",
-      {
-        payload,
-      }
-    );
-    return message;
-  } catch (err) {
-    console.error("API error:", err);
-    throw err;
-  }
+  return attemptWithRetries(
+    async () => {
+      const { message } = await call.post(
+        "havano_restaurant_pos.api.create_order_from_cart",
+        {
+          payload,
+        }
+      );
+      return message;
+    },
+    "Create order"
+  );
 }
 
 export async function handleUpdateOrder(payload) {
-  try {
-    const { message } = await call.post("havano_restaurant_pos.api.update_order", {
-      payload,
-    });
-    return message;
-  } catch (err) {
-    console.error("API error:", err);
-    throw err;
-  }
+  return attemptWithRetries(
+    async () => {
+      const { message } = await call.post("havano_restaurant_pos.api.update_order", {
+        payload,
+      });
+      return message;
+    },
+    "Update order"
+  );
 }
