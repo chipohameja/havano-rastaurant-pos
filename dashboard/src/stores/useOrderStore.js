@@ -67,9 +67,28 @@ export const useOrderStore = create((set) => ({
   fetchTableOrders: async (table) => {
     set({ tableOrdersLoading: true, tableOrdersError: null });
     try {
-      const data = await db.getDoc("HA Table", table);
+      const data = await db.getDocList("HA Order", {
+			fields: [
+				"name",
+				"table",
+				"order_status",
+				"total_price",
+				"waiter",
+				"creation",
+				"order_items",
+			],
+			filters: {
+				table: table,
+				order_status: "Open",
+			},
+			orderBy: {
+				field: "creation",
+				order: "desc",
+			},
+		});
 
-      const tableOrders = data.table_order || [];
+
+      const tableOrders = data || [];
 
       set({ tableOrders, tableOrdersLoading: false });
     } catch (err) {

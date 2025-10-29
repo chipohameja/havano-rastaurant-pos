@@ -13,9 +13,7 @@
   "assigned_waiter",
   "column_break_wpbu",
   "floor",
-  "customer_name",
-  "section_break_wvwq",
-  "table_order"
+  "customer_name"
  ],
  "fields": [
   {
@@ -64,16 +62,6 @@
    "options": "HA Floor"
   },
   {
-   "fieldname": "section_break_wvwq",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "table_order",
-   "fieldtype": "Table",
-   "label": "Table Order",
-   "options": "HA Table Order"
-  },
-  {
    "fieldname": "assigned_waiter",
    "fieldtype": "Link",
    "label": "Assigned Waiter",
@@ -88,7 +76,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-24 18:33:05.917443",
+ "modified": "2025-10-29 10:02:33.175292",
  "modified_by": "Administrator",
  "module": "Havano Restaurant Pos",
  "name": "HA Table",

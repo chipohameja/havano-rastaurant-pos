@@ -17,34 +17,6 @@ class HAOrder(Document):
 	def on_trash(self):
 		self.delete_linked_child_rows()
 
-	def on_update(self):
-		self.update_linked_table_orders()
-
-	def update_linked_table_orders(self):
-		linked_rows = frappe.get_all(
-			"HA Table Order",
-			filters={"order": self.name},
-			fields=["name", "parent"]
-		)
-
-		for row in linked_rows:
-			try:
-				parent_doc = frappe.get_doc("HA Table", row.parent)
-
-				# Find and update the correct child row
-				for child in parent_doc.table_order:
-					if child.order == row.name:
-						child.value = self.total_price
-						child.status = self.order_status
-
-				parent_doc.save(ignore_permissions=True)
-
-			except Exception as e:
-				frappe.log_error(frappe.get_traceback(), f"Error updating linked table for {self.name}")
-
-		frappe.db.commit()
-
-		frappe.logger().info(f"✅ Synced HA Table Order rows for {self.name}")
 
 	def delete_linked_child_rows(self):
 		linked_rows = frappe.get_all(

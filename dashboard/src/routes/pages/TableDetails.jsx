@@ -67,6 +67,7 @@ const TableDetails = () => {
     fetchTableOrders,
   } = useOrderStore();
 
+  console.log("tableOrders", tableOrders);
   const {
     tableDetails,
     loadingTableDetails,
@@ -169,12 +170,12 @@ const TableDetails = () => {
   };
 
   const handleMarkAsPaid = async () => {
-    if (!tableDetails?.name) {
+    if (!id) {
       return;
     }
     try {
       setIsMarkingPaid(true);
-      await markTableAsPaid(tableDetails.name);
+      await markTableAsPaid(id);
       toast.success("Table marked as paid.");
       if (id) {
         await fetchTableOrders(id);
@@ -259,25 +260,25 @@ const TableDetails = () => {
                     ) : tableOrders.length > 0 ? (
                       tableOrders.map((order) => (
                         <TableRow key={order.order}>
-                          <TableCell>{order.order}</TableCell>
+                          <TableCell>{order.name}</TableCell>
                           <TableCell className="text-right">
                             <Badge
                               variant={
-                                typeof order.status === "string"
-                                  ? order.status.toLowerCase()
+                                typeof order.order_status  === "string"
+                                  ? order.order_status .toLowerCase()
                                   : "secondary"
                               }
                             >
-                              {order.status || "Unknown"}
+                              {order.order_status || "Unknown"}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                            {formatCurrency(order.value)}
+                            {formatCurrency(order.total_price)}
                           </TableCell>
                           <TableCell className="text-right">
                             <Button
                               variant="secondary"
-                              onClick={() => handleViewOrder(order.order)}
+                              onClick={() => handleViewOrder(order.name)}
                             >
                               <Eye />
                               View
