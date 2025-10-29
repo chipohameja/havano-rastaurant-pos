@@ -65,6 +65,7 @@ class HATable(Document):
 
         sales_invoice.insert(ignore_permissions=True)
         sales_invoice.submit()
+        self.save(ignore_permissions=True)
         frappe.db.commit()
 
         return sales_invoice

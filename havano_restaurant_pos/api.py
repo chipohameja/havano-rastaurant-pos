@@ -211,8 +211,8 @@ def mark_table_as_paid(table):
         }
 
     except Exception as e:
-        title = f"Error creating sales invoice for {table}: {str(e)[:80]}"
-        frappe.log_error(message=frappe.get_traceback(), title=title[:140])
+        title = f"Error creating sales invoice for {table}"
+        frappe.log_error(message=frappe.get_traceback(), title=title)
 
         return {
             "success": False,
