@@ -85,7 +85,6 @@ def create_order_from_cart(payload):
         order.waiter = safe(payload.get("waiter"))
         order.payment_status = "Unpaid"
 
-        # Add items
         for item in payload.get("order_items", []):
             order.append(
                 "order_items",
@@ -111,7 +110,6 @@ def create_order_from_cart(payload):
             table = frappe.get_doc("HA Table", table_name)
             table.assigned_waiter = safe(payload.get("waiter"))
             table.customer_name = safe(payload.get("customer_name"))
-            table.append("table_order", {"order": order.name})
             table.save(ignore_permissions=True)
             frappe.db.commit()
 
@@ -190,19 +188,66 @@ def get_number_of_orders(menu_item):
 @frappe.whitelist()
 def mark_table_as_paid(table):
     try:
-        table_doc = frappe.get_doc("HA Table", table)
-        sales_invoice = table_doc.create_sales_invoice()
+        default_dine_in_customer = frappe.db.get_single_value(
+            "Sample Pos Settings", "default_dine_in_customer"
+        )
 
-        try:
-            table_doc = frappe.get_doc("HA Table", table)
-            table_doc.table_order = []
-            table_doc.save()
+        orders = frappe.get_all(
+            "HA Order",
+            filters={"table": table, "order_status": "Open"},
+            fields=["name"],
+        )
 
-        except frappe.TimestampMismatchError:
-            frappe.db.rollback()
-            table_doc = frappe.get_doc("HA Table", table)
-            table_doc.table_order = []
-            table_doc.save(ignore_version=True)
+        if not orders:
+            frappe.throw(f"No active orders found for table: {table}")
+
+        order_items = []
+        for order in orders:
+            order_doc = frappe.get_doc("HA Order", order.name)
+            for order_item in order_doc.order_items:
+                order_items.append(
+                    {
+                        "menu_item": order_item.menu_item,
+                        "qty": order_item.qty,
+                        "rate": order_item.rate,
+                        "amount": order_item.amount,
+                    }
+                )
+
+            order_doc.order_status = "Closed"
+            order_doc.save(ignore_permissions=True)
+            frappe.db.commit()
+
+        merged_items = []
+        for item in order_items:
+            found = False
+            for merged in merged_items:
+                if (
+                    merged["menu_item"] == item["menu_item"]
+                    and merged["rate"] == item["rate"]
+                ):
+                    merged["qty"] = merged["qty"] + item["qty"]
+                    merged["amount"] = merged["qty"] * merged["rate"]
+                    found = True
+                    break
+            if not found:
+                merged_items.append(item)
+        sales_invoice = frappe.new_doc("Sales Invoice")
+        sales_invoice.customer = default_dine_in_customer
+        sales_invoice.due_date = frappe.utils.nowdate()
+        for item in merged_items:
+            sales_invoice.append(
+                "items",
+                {
+                    "item_code": item["menu_item"],
+                    "qty": item["qty"],
+                    "rate": item["rate"],
+                    "amount": item["amount"],
+                },
+            )
+        sales_invoice.insert(ignore_permissions=True)
+        sales_invoice.submit()
+        frappe.db.commit()
 
         return {
             "success": True,
@@ -212,7 +257,7 @@ def mark_table_as_paid(table):
 
     except Exception as e:
         title = f"Error creating sales invoice for {table}"
-        frappe.log_error(message=frappe.get_traceback(), title=title)
+        frappe.log_error(frappe.get_traceback(), title)
 
         return {
             "success": False,
