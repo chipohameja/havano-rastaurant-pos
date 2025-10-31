@@ -119,7 +119,7 @@ const Cart = () => {
 
   return (
     <>
-      <Card className="h-[820px] flex flex-col">
+      <Card className="h-[90vh] flex flex-col">
         <CardHeader>
           <CardTitle className="flex justify-between items-center">
             <Clock />
