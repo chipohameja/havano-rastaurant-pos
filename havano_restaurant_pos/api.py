@@ -100,11 +100,10 @@ def create_order_from_cart(payload):
         order.save(ignore_permissions=True)
 
         if order.order_type == "Take Away":
-            invoice = order.create_invoice_from_order()
+            order.create_invoice()
 
         frappe.db.commit()
 
-        # If dine-in, link order to table
         table_name = payload.get("table")
         if table_name and order.order_type == "Dine In":
             table = frappe.get_doc("HA Table", table_name)
@@ -192,6 +191,10 @@ def mark_table_as_paid(table):
             "Sample Pos Settings", "default_dine_in_customer"
         )
 
+        default_warehouse = frappe.db.get_single_value(
+            "Stock Settings", "default_warehouse"
+        )
+
         orders = frappe.get_all(
             "HA Order",
             filters={"table": table, "order_status": "Open"},
@@ -235,6 +238,8 @@ def mark_table_as_paid(table):
         sales_invoice = frappe.new_doc("Sales Invoice")
         sales_invoice.customer = default_dine_in_customer
         sales_invoice.due_date = frappe.utils.nowdate()
+        sales_invoice.update_stock = 1
+        sales_invoice.set_warehouse = default_warehouse
         for item in merged_items:
             sales_invoice.append(
                 "items",
