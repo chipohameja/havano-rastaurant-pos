@@ -133,7 +133,7 @@ const Cart = () => {
           </CardTitle>
         </CardHeader>
         <hr className="border border-gray-600" />
-        <CardContent className="flex-1">
+        <CardContent className="flex-1 overflow-y-auto">
           <p className="text-lg font-bold my-2">Order Details</p>
           {cart.length > 0 ? (
             <div className="flex flex-col space-y-1">

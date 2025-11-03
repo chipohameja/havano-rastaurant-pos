@@ -5,17 +5,26 @@ import {
 } from "react-router-dom";
 
 import MainLayout from "@/layouts/MainLayout";
-import MenuPage from "@/routes/pages/MenuPage";
+import MenuPage from "@/pages/MenuPage";
+import Auth from "@/pages/Auth";
+import ProtectedRoute from "./ProtectedRoute";
 
-import Home from "./pages/Home";
-import Orders from "./pages/Orders";
-import TableDetails from "./pages/TableDetails";
-import Tables from "./pages/Tables";
+import Home from "../pages/Home";
+import Orders from "../pages/Orders";
+import TableDetails from "../pages/TableDetails";
+import Tables from "../pages/Tables";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route>
-      <Route path="/" element={<MainLayout />}>
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <MainLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<Home />} />
         <Route path="tables">
           <Route index element={<Tables />} />
@@ -25,9 +34,13 @@ const router = createBrowserRouter(
           <Route index element={<Orders />} />
           <Route path=":id" element={<h1>Order</h1>} />
         </Route>
-        <Route path="menu" element={<MenuPage />}/>
+        <Route path="menu" element={<MenuPage />} />
         <Route path="*" element={<h1>404</h1>} />
       </Route>
+      <Route path="/auth" element={<MainLayout />}>
+        <Route index element={<Auth />} />
+      </Route>
+      <Route path="*" element={<h1>404</h1>} />
     </Route>
   ),
   {
