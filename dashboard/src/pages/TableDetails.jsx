@@ -283,10 +283,6 @@ const TableDetails = () => {
                               <Eye />
                               View
                             </Button>
-                            <Button variant="secondary" className="ml-2 ">
-                              <Printer />
-                              Print
-                            </Button>
                           </TableCell>
                         </TableRow>
                       ))

@@ -10,6 +10,29 @@ export function cn(...inputs) {
 let defaultCurrency = "USD";
 const MAX_ORDER_RETRY_ATTEMPTS = 3;
 
+export async function login(username, password){
+  try{
+    const res = await auth.loginWithUsernamePassword({
+      username,
+      password
+    })
+    return res
+ }catch(err){
+  console.error("Login failed: ", err)
+  throw err
+ }
+}
+
+export async function logout(){
+  try{
+    const res = await auth.logout()
+    return res
+  }catch(err){
+    console.error("Logout failed: ", err)
+    throw err
+  }
+}
+
 async function attemptWithRetries(action, description, attempts = MAX_ORDER_RETRY_ATTEMPTS) {
   let lastError;
   for (let attempt = 1; attempt <= attempts; attempt++) {

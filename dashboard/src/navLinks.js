@@ -15,6 +15,10 @@ const navLinks = [
         name: "MENU",
         path: "/menu",
     },
+    {
+        name:"AUTH",
+        path:"/auth"
+    }
 ];
 
 export default navLinks
